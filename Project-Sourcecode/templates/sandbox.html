@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}Credit Sandbox{% endblock %}
+{% block page_title %}Credit Sandbox &amp; Simulator{% endblock %}
+
+{% block content %}
+<div class="sandbox-page fade-in">
+  <!-- Header Banner -->
+  <div class="welcome-banner glass mb-4">
+    <div class="welcome-text">
+      <h2>Interactive "What-If" Credit Simulator</h2>
+      <p>Simulate financial profiles and observe how variations instantly affect the ML classification decisions and risk categories.</p>
+    </div>
+    <div class="gov-badge-wrap">
+      <span class="badge-result badge-approved px-3 py-1 fs-7 fw-semibold"><i class="bi bi-shield-check me-1"></i>Official Sandbox</span>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Simulator Sliders Form Column -->
+    <div class="col-lg-6">
+      <div class="form-section glass p-4">
+        <h5 class="mb-4 border-bottom pb-2 text-primary"><i class="bi bi-sliders me-2"></i>Simulation Parameters</h5>
+        
+        <form id="sandboxForm">
+          <!-- Parameter 1: Annual Income -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="annual_income" class="form-label mb-0 fw-semibold">Annual Income (₹)</label>
+              <span class="badge bg-light text-dark fs-6" id="valIncome">₹ 3,00,000</span>
+            </div>
+            <input type="range" class="form-range" id="annual_income" name="annual_income" min="50000" max="1500000" step="10000" value="300000">
+            <small class="text-muted">Total annual gross income of the applicant.</small>
+          </div>
+
+          <!-- Parameter 2: Credit Delinquencies -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="overdue_months" class="form-label mb-0 fw-semibold">Credit Delinquencies (Months Overdue)</label>
+              <span class="badge bg-light text-dark fs-6" id="valOverdue">0 months</span>
+            </div>
+            <input type="range" class="form-range" id="overdue_months" name="overdue_months" min="0" max="5" step="1" value="0">
+            <small class="text-muted">Maximum consecutive billing cycles overdue in credit history.</small>
+          </div>
+
+          <!-- Parameter 3: Job Tenure -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="tenure_years" class="form-label mb-0 fw-semibold">Job Tenure (Years)</label>
+              <span class="badge bg-light text-dark fs-6" id="valTenure">3 years</span>
+            </div>
+            <input type="range" class="form-range" id="tenure_years" name="tenure_years" min="-10" max="25" step="1" value="3">
+            <small class="text-muted">Positive = Employed years. Negative = Years unemployed.</small>
+          </div>
+
+          <!-- Parameter 4: Age -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="age" class="form-label mb-0 fw-semibold">Applicant Age</label>
+              <span class="badge bg-light text-dark fs-6" id="valAge">35 years</span>
+            </div>
+            <input type="range" class="form-range" id="age" name="age" min="18" max="80" step="1" value="35">
+            <small class="text-muted">Age must be between 18 and 80 years.</small>
+          </div>
+
+          <!-- Selects Row -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="education_type" class="form-label">Education Level</label>
+              <select id="education_type" name="education_type" class="form-select glass-input">
+                <option value="Higher education">Higher education</option>
+                <option value="Secondary / secondary special" selected>Secondary / special</option>
+                <option value="Incomplete higher">Incomplete higher</option>
+                <option value="Lower secondary">Lower secondary</option>
+                <option value="Academic degree">Academic degree</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="housing_type" class="form-label">Housing Type</label>
+              <select id="housing_type" name="housing_type" class="form-select glass-input">
+                <option value="House / apartment" selected>House / apartment</option>
+                <option value="With parents">With parents</option>
+                <option value="Municipal apartment">Municipal apartment</option>
+                <option value="Rented apartment">Rented apartment</option>
+                <option value="Office apartment">Office apartment</option>
+                <option value="Co-op apartment">Co-op apartment</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Toggles Row -->
+          <div class="row g-3 align-items-center">
+            <div class="col-sm-6">
+              <div class="form-switch p-3 border rounded d-flex align-items-center justify-content-between" style="background: rgba(255,255,255,0.7);">
+                <label class="form-check-label ms-0" for="owns_property">
+                  <i class="bi bi-house-fill me-2 text-primary"></i>Owns Real Estate
+                </label>
+                <input class="form-check-input" type="checkbox" id="owns_property" name="owns_property" checked>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-switch p-3 border rounded d-flex align-items-center justify-content-between" style="background: rgba(255,255,255,0.7);">
+                <label class="form-check-label ms-0" for="owns_car">
+                  <i class="bi bi-car-front-fill me-2 text-primary"></i>Owns a Car
+                </label>
+                <input class="form-check-input" type="checkbox" id="owns_car" name="owns_car">
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Live Predictions & XAI Factor Column -->
+    <div class="col-lg-6">
+      <div class="result-card glass p-4 h-100 d-flex flex-column" style="margin:0;">
+        <h5 class="mb-4 border-bottom pb-2 text-primary"><i class="bi bi-cpu me-2"></i>Simulation Results</h5>
+
+        <!-- Status display -->
+        <div class="text-center mb-4">
+          <span class="badge-result px-4 py-2 fs-5 fw-bold" id="simVerdict">Approved</span>
+          <p class="text-muted mt-2 small" id="simModelName">Best Deployed Model</p>
+        </div>
+
+        <div class="row align-items-center justify-content-center mb-4">
+          <div class="col-auto text-center" style="position: relative; height: 160px; width: 220px;">
+            <canvas id="gaugeChartSandbox" width="220" height="160"></canvas>
+            <div class="gauge-value" id="simGaugeVal" style="position: absolute; bottom: 20px; left: 0; right: 0; font-size: 1.5rem; font-weight: 700;">0%</div>
+          </div>
+        </div>
+
+        <!-- Explainable AI Section -->
+        <div class="xai-contributions flex-grow-1">
+          <h6 class="fw-bold mb-3"><i class="bi bi-info-circle-fill me-2 text-info"></i>Feature Impact / Reason Analysis</h6>
+          <div class="xai-list d-flex flex-column gap-2" id="xaiList">
+            <!-- Populated via Javascript -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let sandboxChart = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Bind change events to all inputs
+  const inputs = document.querySelectorAll("#sandboxForm input, #sandboxForm select");
+  inputs.forEach(inp => {
+    inp.addEventListener("input", handleInputChange);
+    inp.addEventListener("change", handleInputChange);
+  });
+
+  // Init live simulation
+  runSimulation();
+});
+
+function handleInputChange(e) {
+  // Update badge labels dynamically
+  if (e.target.id === 'annual_income') {
+    document.getElementById('valIncome').textContent = '₹ ' + parseInt(e.target.value).toLocaleString('en-IN');
+  } else if (e.target.id === 'overdue_months') {
+    document.getElementById('valOverdue').textContent = e.target.value + ' month' + (e.target.value == 1 ? '' : 's');
+  } else if (e.target.id === 'tenure_years') {
+    const v = parseInt(e.target.value);
+    document.getElementById('valTenure').textContent = v < 0 ? Math.abs(v) + ' years unemployed' : v + ' year' + (v == 1 ? '' : 's');
+  } else if (e.target.id === 'age') {
+    document.getElementById('valAge').textContent = e.target.value + ' years';
+  }
+
+  // Run sim
+  runSimulation();
+}
+
+function runSimulation() {
+  const form = document.getElementById("sandboxForm");
+  
+  // Format data
+  const tenureYears = parseInt(document.getElementById("tenure_years").value);
+  const data = {
+    gender: "Male",
+    owns_car: document.getElementById("owns_car").checked ? "on" : "off",
+    owns_property: document.getElementById("owns_property").checked ? "on" : "off",
+    num_children: 0,
+    annual_income: document.getElementById("annual_income").value,
+    income_type: "Working",
+    education_type: document.getElementById("education_type").value,
+    family_status: "Married",
+    housing_type: document.getElementById("housing_type").value,
+    age: document.getElementById("age").value,
+    employment_days: tenureYears * 365,
+    work_phone_provided: "on",
+    phone_provided: "on",
+    email_provided: "on",
+    family_member_count: 2,
+    months_balance: -12,
+    overdue_months: document.getElementById("overdue_months").value,
+    payment_status: document.getElementById("overdue_months").value
+  };
+
+  fetch("/api/predict/sandbox", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      updateSandboxUI(res);
+    }
+  })
+  .catch(err => console.error("Sandbox API error:", err));
+}
+
+function updateSandboxUI(res) {
+  // Update Verdict
+  const verdictEl = document.getElementById("simVerdict");
+  verdictEl.textContent = res.result;
+  
+  if (res.result === "Approved") {
+    verdictEl.className = "badge-result badge-approved px-4 py-2 fs-5 fw-bold";
+    verdictEl.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Approved';
+  } else {
+    verdictEl.className = "badge-result badge-rejected px-4 py-2 fs-5 fw-bold";
+    verdictEl.innerHTML = '<i class="bi bi-x-circle-fill me-2"></i>Rejected';
+  }
+
+  // Model info
+  document.getElementById("simModelName").textContent = `${res.model_name} (${res.algorithm_type}) — Risk: ${res.risk}`;
+
+  // Update Gauge Value
+  document.getElementById("simGaugeVal").textContent = res.confidence.toFixed(1) + "%";
+
+  // Re-render chart
+  renderGauge(res.confidence, res.result === "Approved");
+
+  // Render XAI Impacts
+  const xaiList = document.getElementById("xaiList");
+  xaiList.innerHTML = "";
+  
+  res.impacts.forEach(imp => {
+    const div = document.createElement("div");
+    const isPos = imp.type === "positive";
+    div.className = `p-2 rounded border d-flex align-items-start gap-2 ${isPos ? 'bg-success-subtle border-success-subtle text-success-emphasis' : 'bg-danger-subtle border-danger-subtle text-danger-emphasis'}`;
+    div.style.fontSize = "0.85rem";
+    
+    div.innerHTML = `
+      <i class="bi bi-${isPos ? 'check-circle-fill' : 'x-circle-fill'} fs-6 mt-0.5" style="color: ${isPos ? '#138808' : '#d32f2f'}"></i>
+      <div>
+        <strong class="d-block">${imp.name}</strong>
+        <span>${imp.desc}</span>
+      </div>
+    `;
+    xaiList.appendChild(div);
+  });
+}
+
+function renderGauge(val, isApproved) {
+  const ctx = document.getElementById("gaugeChartSandbox").getContext("2d");
+  const primaryColor = isApproved ? "#138808" : "#d32f2f";
+
+  if (sandboxChart) {
+    sandboxChart.destroy();
+  }
+
+  sandboxChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [val, 100 - val],
+        backgroundColor: [primaryColor, '#e2e8f0'],
+        borderWidth: 0,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: false,
+      cutout: '80%',
+      rotation: -90,
+      circumference: 180,
+      plugins: {
+        legend: { display: false },
+        tooltip: { display: false }
+      },
+      animation: { duration: 400 } // Fast animation for sliders
+    }
+  });
+}
+</script>
+{% endblock %}

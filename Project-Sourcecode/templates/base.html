@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Credit Card Approval Prediction System — AI-powered banking decision engine."/>
+  <title>{% block title %}CreditAI{% endblock %} | Credit Card Approval System</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+<!-- ══════════════════════════════════════
+     Page Loader
+════════════════════════════════════════ -->
+<div id="page-loader">
+  <div class="loader-inner">
+    <div class="loader-ring"></div>
+    <span class="loader-text">CreditAI</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     Sidebar Navigation (authenticated)
+════════════════════════════════════════ -->
+{% if session.get('user_id') %}
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-credit-card-2-front-fill"></i></div>
+    <div class="brand-text">
+      <span class="brand-title">CreditAI</span>
+      <span class="brand-sub">Prediction System</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">MAIN</div>
+    <a href="{{ url_for('dashboard') }}"
+       class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('apply') }}"
+       class="nav-item {% if request.endpoint == 'apply' %}active{% endif %}">
+      <i class="bi bi-person-plus-fill"></i><span>New Application</span>
+    </a>
+    <a href="{{ url_for('history') }}"
+       class="nav-item {% if request.endpoint == 'history' %}active{% endif %}">
+      <i class="bi bi-clock-history"></i><span>My Predictions</span>
+    </a>
+    <a href="{{ url_for('model_info') }}"
+       class="nav-item {% if request.endpoint == 'model_info' %}active{% endif %}">
+      <i class="bi bi-cpu-fill"></i><span>ML Models</span>
+    </a>
+    <a href="{{ url_for('sandbox') }}"
+       class="nav-item {% if request.endpoint == 'sandbox' %}active{% endif %}">
+      <i class="bi bi-sliders"></i><span>Credit Sandbox</span>
+    </a>
+
+    {% if session.get('role') == 'admin' %}
+    <div class="nav-label mt-3">ADMIN</div>
+    <a href="{{ url_for('admin_dashboard') }}"
+       class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+      <i class="bi bi-shield-shaded"></i><span>Admin Panel</span>
+    </a>
+    <a href="{{ url_for('admin_users') }}"
+       class="nav-item {% if request.endpoint == 'admin_users' %}active{% endif %}">
+      <i class="bi bi-people-fill"></i><span>Manage Users</span>
+    </a>
+    <a href="{{ url_for('admin_applicants') }}"
+       class="nav-item {% if request.endpoint == 'admin_applicants' %}active{% endif %}">
+      <i class="bi bi-person-lines-fill"></i><span>Applicants</span>
+    </a>
+    <a href="{{ url_for('admin_predictions') }}"
+       class="nav-item {% if request.endpoint == 'admin_predictions' %}active{% endif %}">
+      <i class="bi bi-bar-chart-fill"></i><span>Predictions</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ session.get('name','U')[0].upper() }}</div>
+      <div class="user-meta">
+        <span class="user-name">{{ session.get('name','User') }}</span>
+        <span class="user-role badge-role-{{ session.get('role','user') }}">
+          {{ session.get('role','user')|capitalize }}
+        </span>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="btn-logout" title="Logout">
+      <i class="bi bi-box-arrow-right"></i>
+    </a>
+  </div>
+</div>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+{% endif %}
+
+<!-- ══════════════════════════════════════
+     Main Content
+════════════════════════════════════════ -->
+<div class="main-wrap {% if session.get('user_id') %}with-sidebar{% endif %}">
+
+  <!-- Government Accessibility Toolbar -->
+  <div class="gov-top-bar" id="content-start">
+    <div>
+      <a href="#">भारत सरकार</a>
+      <span class="text-muted mx-1">|</span>
+      <a href="#">Government of India</a>
+    </div>
+    <div class="gov-accessibility-controls">
+      <a href="#page-main-content">Skip to main content</a>
+      <button class="gov-accessibility-btn" onclick="adjustTextSize(-1)" title="Decrease Text Size">A-</button>
+      <button class="gov-accessibility-btn" onclick="adjustTextSize(0)" title="Default Text Size">A</button>
+      <button class="gov-accessibility-btn" onclick="adjustTextSize(1)" title="Increase Text Size">A+</button>
+    </div>
+  </div>
+
+  <!-- Official Government Header -->
+  <header class="gov-header">
+    <div class="gov-brand-container">
+      <div class="gov-emblem-placeholder">MoF</div>
+      <div class="gov-title-block">
+        <h1 class="gov-title-main">National Credit Card Approval Portal</h1>
+        <p class="gov-title-sub">Ministry of Finance | Department of Financial Services</p>
+      </div>
+    </div>
+    <div class="gov-secure-badge">
+      <i class="bi bi-shield-check-fill"></i>
+      <span>Secure Portal (NCCAP)</span>
+    </div>
+  </header>
+
+  <!-- National Tricolor Strip -->
+  <div class="gov-tricolor-strip"></div>
+
+  {% if session.get('user_id') %}
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="btn-hamburger" id="sidebarToggle">
+      <i class="bi bi-list"></i>
+    </button>
+    <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+    <div class="topbar-right">
+      <span class="topbar-time" id="topbarTime"></span>
+      <a href="{{ url_for('apply') }}" class="btn-new-app">
+        <i class="bi bi-plus-lg"></i> New Application
+      </a>
+    </div>
+  </header>
+  {% endif %}
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+      <div class="flash-alert flash-{{ category }} fade-in" role="alert">
+        <i class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}x-circle-fill{% elif category == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+        {{ message }}
+        <button class="flash-close" onclick="this.parentElement.remove()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Page Content -->
+  <main class="page-content" id="page-main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Official Government Footer -->
+  <footer class="gov-footer">
+    <div class="gov-footer-links">
+      <a href="#">Website Policies</a>
+      <span class="mx-1">|</span>
+      <a href="#">Help & Support</a>
+      <span class="mx-1">|</span>
+      <a href="#">Contact Us</a>
+      <span class="mx-1">|</span>
+      <a href="#">Feedback</a>
+      <span class="mx-1">|</span>
+      <a href="#">Sitemap</a>
+    </div>
+    <div class="gov-footer-credit">
+      <p>© 2026 National Credit Card Approval Portal (NCCAP). All rights reserved.</p>
+      <p class="mt-1">Designed, Developed and Hosted by <strong>National Informatics Centre (NIC)</strong>. Content Provided by Department of Financial Services, Ministry of Finance, Government of India.</p>
+      <p class="mt-1 text-muted" style="font-size:0.68rem;"><i class="bi bi-shield-lock-fill me-1"></i>Secure 256-Bit SSL Encryption Active.</p>
+    </div>
+  </footer>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+function adjustTextSize(offset) {
+  const html = document.documentElement;
+  if (offset === 0) {
+    html.style.fontSize = '15px';
+  } else if (offset === 1) {
+    html.style.fontSize = '16.5px';
+  } else if (offset === -1) {
+    html.style.fontSize = '13.5px';
+  }
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

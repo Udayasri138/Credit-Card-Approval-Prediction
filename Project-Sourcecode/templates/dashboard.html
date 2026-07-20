@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner glass fade-in">
+  <div class="welcome-text">
+    <h2>Good {{ 'Morning' if now_hour < 12 else ('Afternoon' if now_hour < 18 else 'Evening') }}, {{ session.get('name', 'User').split()[0] }}! 👋</h2>
+    <p>Here's a snapshot of your credit approval activity.</p>
+  </div>
+  <a href="{{ url_for('apply') }}" class="btn-primary-glow">
+    <i class="bi bi-plus-circle-fill me-2"></i>New Application
+  </a>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid fade-in-up">
+  <div class="stat-card glass stat-total">
+    <div class="stat-icon-wrap"><i class="bi bi-file-earmark-person-fill"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" data-count="{{ stats.total }}">0</span>
+      <span class="stat-label">Total Applications</span>
+    </div>
+    <div class="stat-trend">
+      <i class="bi bi-arrow-up-right"></i>
+    </div>
+  </div>
+
+  <div class="stat-card glass stat-approved">
+    <div class="stat-icon-wrap"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" data-count="{{ stats.approved }}">0</span>
+      <span class="stat-label">Approved</span>
+    </div>
+    <div class="stat-badge badge-approved">Approved</div>
+  </div>
+
+  <div class="stat-card glass stat-rejected">
+    <div class="stat-icon-wrap"><i class="bi bi-x-circle-fill"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" data-count="{{ stats.rejected }}">0</span>
+      <span class="stat-label">Rejected</span>
+    </div>
+    <div class="stat-badge badge-rejected">Rejected</div>
+  </div>
+
+  <div class="stat-card glass stat-rate">
+    <div class="stat-icon-wrap"><i class="bi bi-percent"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" id="approvalRate">
+        {% if stats.total > 0 %}
+          {{ ((stats.approved / stats.total) * 100)|round(1) }}%
+        {% else %}
+          0%
+        {% endif %}
+      </span>
+      <span class="stat-label">Approval Rate</span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-row fade-in-up">
+  <!-- Monthly Trend Chart -->
+  <div class="chart-card glass">
+    <div class="chart-header">
+      <h5><i class="bi bi-bar-chart-fill me-2"></i>Monthly Prediction Trend</h5>
+    </div>
+    <div class="chart-body">
+      <canvas id="monthlyChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Donut Chart -->
+  <div class="chart-card glass chart-small">
+    <div class="chart-header">
+      <h5><i class="bi bi-pie-chart-fill me-2"></i>Approval Breakdown</h5>
+    </div>
+    <div class="chart-body d-flex align-items-center justify-content-center">
+      <canvas id="donutChart" width="200" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Predictions Table -->
+<div class="table-card glass fade-in-up">
+  <div class="table-card-header">
+    <h5><i class="bi bi-clock-history me-2"></i>Recent Predictions</h5>
+    <a href="{{ url_for('history') }}" class="btn-link-sm">
+      View All <i class="bi bi-arrow-right"></i>
+    </a>
+  </div>
+  {% if recent %}
+  <div class="table-responsive">
+    <table class="table table-glass">
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Result</th>
+          <th>Risk Level</th>
+          <th>Confidence</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recent %}
+        <tr>
+          <td><strong>{{ r.FullName }}</strong></td>
+          <td>
+            <span class="badge-result {{ 'badge-approved' if r.ApprovalResult == 'Approved' else 'badge-rejected' }}">
+              <i class="bi bi-{{ 'check-circle-fill' if r.ApprovalResult == 'Approved' else 'x-circle-fill' }} me-1"></i>
+              {{ r.ApprovalResult }}
+            </span>
+          </td>
+          <td>
+            <span class="badge-risk risk-{{ r.RiskCategory.lower().replace(' ', '-') }}">
+              {{ r.RiskCategory }}
+            </span>
+          </td>
+          <td>
+            <div class="conf-bar-wrap">
+              <div class="conf-bar" style="width:{{ r.ConfidenceScore }}%"
+                   data-value="{{ r.ConfidenceScore }}"></div>
+              <span>{{ r.ConfidenceScore }}%</span>
+            </div>
+          </td>
+          <td class="text-muted">{{ r.PredictionDate.strftime('%d %b %Y') if r.PredictionDate else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-inbox"></i>
+    <p>No predictions yet. <a href="{{ url_for('apply') }}">Submit your first application</a></p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions fade-in-up">
+  <h5 class="section-title"><i class="bi bi-lightning-fill me-2"></i>Quick Actions</h5>
+  <div class="actions-grid">
+    <a href="{{ url_for('apply') }}" class="action-card glass">
+      <i class="bi bi-person-plus-fill"></i>
+      <span>New Application</span>
+    </a>
+    <a href="{{ url_for('history') }}" class="action-card glass">
+      <i class="bi bi-clock-history"></i>
+      <span>View History</span>
+    </a>
+    <a href="{{ url_for('model_info') }}" class="action-card glass">
+      <i class="bi bi-cpu-fill"></i>
+      <span>ML Models</span>
+    </a>
+    <a href="{{ url_for('sandbox') }}" class="action-card glass">
+      <i class="bi bi-sliders"></i>
+      <span>Credit Sandbox</span>
+    </a>
+    {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('admin_dashboard') }}" class="action-card glass">
+      <i class="bi bi-shield-shaded"></i>
+      <span>Admin Panel</span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Pass server-side data to JS
+const dashStats = {
+  approved: {{ stats.approved }},
+  rejected: {{ stats.rejected }}
+};
+// Charts are initialised in main.js using these globals
+window.DASH_STATS = dashStats;
+</script>
+{% endblock %}

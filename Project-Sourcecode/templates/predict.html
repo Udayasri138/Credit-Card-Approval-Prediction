@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Processing Prediction{% endblock %}
+{% block page_title %}AI Prediction Engine{% endblock %}
+
+{% block content %}
+<div class="predict-page fade-in">
+  <div class="predict-card glass">
+    <div class="predict-animation">
+      <div class="ai-brain-wrap">
+        <div class="ai-ring ai-ring-1"></div>
+        <div class="ai-ring ai-ring-2"></div>
+        <div class="ai-ring ai-ring-3"></div>
+        <div class="ai-core">
+          <i class="bi bi-cpu-fill"></i>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="predict-title">AI Model Processing</h2>
+    <p class="predict-sub">Our machine learning engine is analysing the application data.</p>
+
+    <div class="processing-steps" id="processingSteps">
+      <div class="proc-step" id="ps1">
+        <div class="proc-dot"></div>
+        <span>Loading applicant data…</span>
+        <i class="bi bi-check-circle-fill proc-check d-none"></i>
+      </div>
+      <div class="proc-step" id="ps2">
+        <div class="proc-dot"></div>
+        <span>Feature engineering…</span>
+        <i class="bi bi-check-circle-fill proc-check d-none"></i>
+      </div>
+      <div class="proc-step" id="ps3">
+        <div class="proc-dot"></div>
+        <span>Running ML model…</span>
+        <i class="bi bi-check-circle-fill proc-check d-none"></i>
+      </div>
+      <div class="proc-step" id="ps4">
+        <div class="proc-dot"></div>
+        <span>Calculating risk score…</span>
+        <i class="bi bi-check-circle-fill proc-check d-none"></i>
+      </div>
+      <div class="proc-step" id="ps5">
+        <div class="proc-dot"></div>
+        <span>Generating result…</span>
+        <i class="bi bi-check-circle-fill proc-check d-none"></i>
+      </div>
+    </div>
+
+    <div class="predict-progress-wrap">
+      <div class="predict-progress-bar" id="predictProgressBar"></div>
+    </div>
+    <div class="predict-progress-pct" id="predictPct">0%</div>
+
+    <form method="POST" action="{{ url_for('predict') }}" id="predictForm">
+      <button type="submit" id="predictSubmitBtn" class="btn-primary-glow mt-4">
+        <i class="bi bi-play-circle-fill me-2"></i>Run Prediction
+      </button>
+    </form>
+
+    <p class="predict-note">
+      <i class="bi bi-shield-check me-1"></i>
+      Data is encrypted and processed securely. Results are stored privately.
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const steps = ['ps1','ps2','ps3','ps4','ps5'];
+let current = 0;
+let progress = 0;
+const bar = document.getElementById('predictProgressBar');
+const pct = document.getElementById('predictPct');
+
+function advanceStep() {
+  if (current < steps.length) {
+    const el = document.getElementById(steps[current]);
+    el.querySelector('.proc-dot').style.background = 'var(--accent-blue)';
+    el.querySelector('.proc-dot').style.boxShadow = '0 0 8px var(--accent-blue)';
+    setTimeout(() => {
+      el.querySelector('.proc-check').classList.remove('d-none');
+      el.querySelector('.proc-dot').style.display = 'none';
+      current++;
+    }, 700);
+  }
+}
+
+const progInterval = setInterval(() => {
+  if (progress < 95) {
+    progress += Math.random() * 6 + 2;
+    progress = Math.min(progress, 95);
+    bar.style.width = progress + '%';
+    pct.textContent = Math.round(progress) + '%';
+    if (Math.round(progress) % 20 === 0 || progress > 90) advanceStep();
+  }
+}, 250);
+
+// Auto-submit after animation
+setTimeout(() => {
+  clearInterval(progInterval);
+  bar.style.width = '100%';
+  pct.textContent = '100%';
+  steps.forEach(id => {
+    const el = document.getElementById(id);
+    el.querySelector('.proc-check').classList.remove('d-none');
+    const dot = el.querySelector('.proc-dot');
+    if (dot) dot.style.display = 'none';
+  });
+  setTimeout(() => {
+    document.getElementById('predictForm').submit();
+  }, 600);
+}, 3800);
+</script>
+{% endblock %}

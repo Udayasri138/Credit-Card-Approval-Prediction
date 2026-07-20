@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-page fade-in">
+
+  <!-- Admin Header -->
+  <div class="admin-header-banner glass">
+    <div class="admin-badge"><i class="bi bi-shield-fill-check me-2"></i>Administrator</div>
+    <h3>System Overview</h3>
+    <p class="text-muted">Complete visibility and control over the CreditAI platform.</p>
+  </div>
+
+  <!-- System Stats -->
+  <div class="stats-grid fade-in-up">
+    <div class="stat-card glass stat-total">
+      <div class="stat-icon-wrap"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-info">
+        <span class="stat-value" data-count="{{ stats.total_users }}">0</span>
+        <span class="stat-label">Registered Users</span>
+      </div>
+    </div>
+    <div class="stat-card glass stat-approved">
+      <div class="stat-icon-wrap"><i class="bi bi-person-lines-fill"></i></div>
+      <div class="stat-info">
+        <span class="stat-value" data-count="{{ stats.total_applicants }}">0</span>
+        <span class="stat-label">Total Applicants</span>
+      </div>
+    </div>
+    <div class="stat-card glass stat-rate">
+      <div class="stat-icon-wrap"><i class="bi bi-bar-chart-steps"></i></div>
+      <div class="stat-info">
+        <span class="stat-value" data-count="{{ stats.total_predictions }}">0</span>
+        <span class="stat-label">Total Predictions</span>
+      </div>
+    </div>
+    <div class="stat-card glass" style="border-color: var(--success-glow);">
+      <div class="stat-icon-wrap" style="color:var(--accent-green)"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-info">
+        <span class="stat-value" data-count="{{ stats.total_approved }}">0</span>
+        <span class="stat-label">Approved</span>
+      </div>
+    </div>
+    <div class="stat-card glass" style="border-color: var(--danger-glow);">
+      <div class="stat-icon-wrap" style="color:var(--accent-red)"><i class="bi bi-x-circle-fill"></i></div>
+      <div class="stat-info">
+        <span class="stat-value" data-count="{{ stats.total_rejected }}">0</span>
+        <span class="stat-label">Rejected</span>
+      </div>
+    </div>
+    <div class="stat-card glass stat-rejected">
+      <div class="stat-icon-wrap"><i class="bi bi-cpu-fill"></i></div>
+      <div class="stat-info">
+        <span class="stat-value" data-count="{{ stats.total_models }}">0</span>
+        <span class="stat-label">ML Models</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Admin Actions -->
+  <div class="quick-actions fade-in-up">
+    <h5 class="section-title"><i class="bi bi-lightning-fill me-2"></i>Admin Actions</h5>
+    <div class="actions-grid">
+      <a href="{{ url_for('admin_users') }}" class="action-card glass">
+        <i class="bi bi-people-fill"></i>
+        <span>Manage Users</span>
+      </a>
+      <a href="{{ url_for('admin_applicants') }}" class="action-card glass">
+        <i class="bi bi-person-lines-fill"></i>
+        <span>Applicants</span>
+      </a>
+      <a href="{{ url_for('admin_predictions') }}" class="action-card glass">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Predictions</span>
+      </a>
+      <a href="{{ url_for('export_predictions_csv') }}" class="action-card glass">
+        <i class="bi bi-file-earmark-arrow-down-fill"></i>
+        <span>Export Predictions</span>
+      </a>
+      <a href="{{ url_for('export_users_csv') }}" class="action-card glass">
+        <i class="bi bi-person-down-fill"></i>
+        <span>Export Users</span>
+      </a>
+      <a href="{{ url_for('model_info') }}" class="action-card glass">
+        <i class="bi bi-cpu-fill"></i>
+        <span>ML Models</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row fade-in-up">
+    <div class="chart-card glass">
+      <div class="chart-header">
+        <h5><i class="bi bi-bar-chart-fill me-2"></i>Monthly Prediction Trend</h5>
+      </div>
+      <div class="chart-body">
+        <canvas id="monthlyChart" height="200"></canvas>
+      </div>
+    </div>
+    <div class="chart-card glass chart-small">
+      <div class="chart-header">
+        <h5><i class="bi bi-pie-chart-fill me-2"></i>Approval Breakdown</h5>
+      </div>
+      <div class="chart-body d-flex align-items-center justify-content-center">
+        <canvas id="donutChart" width="200" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Predictions -->
+  <div class="table-card glass fade-in-up">
+    <div class="table-card-header">
+      <h5><i class="bi bi-clock-history me-2"></i>Recent Predictions</h5>
+      <a href="{{ url_for('admin_predictions') }}" class="btn-link-sm">
+        View All <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+    {% if recent_preds %}
+    <div class="table-responsive">
+      <table class="table table-glass">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Applicant</th>
+            <th>User Email</th>
+            <th>Result</th>
+            <th>Risk</th>
+            <th>Confidence</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent_preds %}
+          <tr>
+            <td class="text-muted">#{{ r.PredictionID }}</td>
+            <td><strong>{{ r.FullName }}</strong></td>
+            <td><small class="text-muted">{{ r.Email }}</small></td>
+            <td>
+              <span class="badge-result {{ 'badge-approved' if r.ApprovalResult == 'Approved' else 'badge-rejected' }}">
+                {{ r.ApprovalResult }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-risk risk-{{ r.RiskCategory.lower().replace(' ','-') }}">
+                {{ r.RiskCategory }}
+              </span>
+            </td>
+            <td>{{ r.ConfidenceScore }}%</td>
+            <td class="text-muted">
+              {{ r.PredictionDate.strftime('%d %b %Y') if r.PredictionDate else '—' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><p>No predictions yet.</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.DASH_STATS = {
+  approved: {{ stats.total_approved }},
+  rejected: {{ stats.total_rejected }}
+};
+</script>
+{% endblock %}

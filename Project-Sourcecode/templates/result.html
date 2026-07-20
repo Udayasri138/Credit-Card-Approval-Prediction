@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Prediction Result{% endblock %}
+{% block page_title %}Prediction Result{% endblock %}
+
+{% block content %}
+<div class="result-page fade-in" data-pred-id="{{ pred.PredictionID }}">
+
+  <!-- Result Hero Card -->
+  <div class="result-hero glass {{ 'result-approved' if pred.ApprovalResult == 'Approved' else 'result-rejected' }}">
+    <div class="result-icon-wrap">
+      {% if pred.ApprovalResult == 'Approved' %}
+        <div class="result-icon-ring ring-approved">
+          <i class="bi bi-check-lg"></i>
+        </div>
+      {% else %}
+        <div class="result-icon-ring ring-rejected">
+          <i class="bi bi-x-lg"></i>
+        </div>
+      {% endif %}
+    </div>
+    <div class="result-hero-text">
+      <h1 class="result-verdict {{ 'text-approved' if pred.ApprovalResult == 'Approved' else 'text-rejected' }}">
+        {{ pred.ApprovalResult }}
+      </h1>
+      <p class="result-applicant">Application for <strong>{{ pred.FullName }}</strong></p>
+      <p class="result-date text-muted">
+        <i class="bi bi-calendar3 me-1"></i>
+        {{ pred.PredictionDate.strftime('%d %B %Y, %I:%M %p') if pred.PredictionDate else '' }}
+      </p>
+    </div>
+    <div class="result-risk">
+      <span class="badge-risk risk-{{ pred.RiskCategory.lower().replace(' ','-') }} badge-lg">
+        <i class="bi bi-shield-fill me-1"></i>{{ pred.RiskCategory }}
+      </span>
+    </div>
+  </div>
+
+  <div class="result-body">
+    <!-- Confidence Gauge -->
+    <div class="gauge-card glass">
+      <h5><i class="bi bi-speedometer2 me-2"></i>Confidence Score</h5>
+      <div class="gauge-wrap">
+        <canvas id="gaugeChart" width="260" height="150"></canvas>
+        <div class="gauge-center">
+          <span class="gauge-value">{{ pred.ConfidenceScore }}%</span>
+          <span class="gauge-label">Confidence</span>
+        </div>
+      </div>
+      <p class="gauge-note text-muted">
+        The model is <strong>{{ pred.ConfidenceScore }}%</strong> confident in this prediction.
+      </p>
+    </div>
+
+    <!-- Details Panel -->
+    <div class="result-details glass">
+      <h5><i class="bi bi-person-badge-fill me-2"></i>Applicant Details</h5>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Full Name</span>
+          <span class="detail-val">{{ pred.FullName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Age</span>
+          <span class="detail-val">{{ pred.Age }} years</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Annual Income</span>
+          <span class="detail-val">₹{{ '{:,.0f}'.format(pred.AnnualIncome) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Income Type</span>
+          <span class="detail-val">{{ pred.IncomeType }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Education</span>
+          <span class="detail-val">{{ pred.EducationType }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Family Status</span>
+          <span class="detail-val">{{ pred.FamilyStatus }}</span>
+        </div>
+      </div>
+
+      <div class="divider-line"></div>
+
+      <h5 class="mt-4"><i class="bi bi-cpu me-2"></i>Model Information</h5>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Model Used</span>
+          <span class="detail-val">{{ pred.ModelName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Algorithm</span>
+          <span class="detail-val">{{ pred.AlgorithmType.replace('_',' ').title() }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Model Accuracy</span>
+          <span class="detail-val">{{ (pred.Accuracy * 100)|round(2) }}%</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Prediction ID</span>
+          <span class="detail-val">#{{ pred.PredictionID }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Explainable AI (XAI) Reason Codes -->
+  {% if impacts %}
+  <div class="xai-contributions glass p-4 mb-4 fade-in-up">
+    <h5 class="mb-3 text-primary"><i class="bi bi-info-circle-fill me-2 text-info"></i>Feature Impact / Decision Breakdown</h5>
+    <p class="text-muted small">Below are the primary positive and negative factors in the applicant's profile that influenced the model's prediction.</p>
+    <div class="xai-list d-flex flex-column gap-2 mt-3">
+      {% for imp in impacts %}
+      {% set is_pos = imp.type == 'positive' %}
+      <div class="p-3 rounded border d-flex align-items-start gap-2 
+                  {{ 'bg-success-subtle border-success-subtle text-success-emphasis' if is_pos else 'bg-danger-subtle border-danger-subtle text-danger-emphasis' }}">
+        <i class="bi bi-{{ 'check-circle-fill' if is_pos else 'x-circle-fill' }} fs-5 mt-0.5" style="color: {{ '#138808' if is_pos else '#d32f2f' }}"></i>
+        <div>
+          <strong class="d-block">{{ imp.name }} ({{ imp.effect }})</strong>
+          <span class="small">{{ imp.desc }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Recommendation -->
+  <div class="recommendation-card glass fade-in-up
+       {{ 'rec-approved' if pred.ApprovalResult == 'Approved' else 'rec-rejected' }}">
+    <div class="rec-icon">
+      {% if pred.ApprovalResult == 'Approved' %}
+        <i class="bi bi-patch-check-fill"></i>
+      {% else %}
+        <i class="bi bi-patch-exclamation-fill"></i>
+      {% endif %}
+    </div>
+    <div class="rec-text">
+      {% if pred.ApprovalResult == 'Approved' %}
+        <h5>Recommendation: Proceed with Approval</h5>
+        <p>The applicant meets the credit criteria. The ML model has assessed a
+        <strong>{{ pred.RiskCategory }}</strong> profile with <strong>{{ pred.ConfidenceScore }}%</strong>
+        confidence. Recommend proceeding with standard onboarding.</p>
+      {% else %}
+        <h5>Recommendation: Application Declined</h5>
+        <p>The applicant does not meet the current credit criteria. The ML model flagged a
+        <strong>{{ pred.RiskCategory }}</strong> profile. Recommend reviewing income and credit
+        history before reapplying.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="result-actions fade-in-up">
+    <a href="{{ url_for('apply') }}" class="btn-primary-glow">
+      <i class="bi bi-plus-circle me-2"></i>New Application
+    </a>
+    <a href="{{ url_for('history') }}" class="btn-outline-glow">
+      <i class="bi bi-clock-history me-2"></i>View History
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="btn-outline-glow">
+      <i class="bi bi-grid me-2"></i>Dashboard
+    </a>
+    <button onclick="window.print()" class="btn-outline-glow">
+      <i class="bi bi-printer me-2"></i>Print Result
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Gauge chart (semi-doughnut)
+  (function () {
+    const confidence = {{ pred.ConfidenceScore }};
+    const isApproved = '{{ pred.ApprovalResult }}' === 'Approved';
+    const primaryColor = isApproved ? '#138808' : '#d32f2f';
+    const ctx = document.getElementById('gaugeChart').getContext('2d');
+
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [confidence, 100 - confidence],
+          backgroundColor: [primaryColor, '#e2e8f0'],
+          borderWidth: 0,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        circumference: 180,
+        rotation: -90,
+        cutout: '72%',
+        responsive: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        animation: { animateRotate: true, duration: 1500, easing: 'easeOutQuart' }
+      }
+    });
+  })();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <!-- Left panel -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-brand">
+        <i class="bi bi-credit-card-2-front-fill"></i>
+        <span>CreditAI</span>
+      </div>
+      <h2 class="auth-headline">Start Your Journey<br>With CreditAI</h2>
+      <p class="auth-desc">
+        Join thousands of banking professionals using our
+        AI-powered system to make smarter credit decisions.
+      </p>
+      <div class="auth-features">
+        <div class="auth-feature">
+          <i class="bi bi-person-check-fill"></i>
+          <span>Free Account</span>
+        </div>
+        <div class="auth-feature">
+          <i class="bi bi-shield-lock-fill"></i>
+          <span>Secure & Private</span>
+        </div>
+        <div class="auth-feature">
+          <i class="bi bi-rocket-takeoff-fill"></i>
+          <span>Instant Access</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="auth-right">
+    <div class="auth-card glass">
+      <div class="auth-card-header">
+        <h1>Create Account</h1>
+        <p>Join the CreditAI platform today</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('register') }}" class="auth-form" novalidate id="registerForm">
+        <div class="form-group">
+          <label for="name" class="form-label">Full Name</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-person-fill input-icon"></i>
+            <input type="text" id="name" name="name" class="form-control glass-input"
+                   placeholder="John Smith" required value="{{ name|default('') }}"
+                   autocomplete="name"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-envelope-fill input-icon"></i>
+            <input type="email" id="email" name="email" class="form-control glass-input"
+                   placeholder="you@example.com" required value="{{ email|default('') }}"
+                   autocomplete="email"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password
+            <small class="text-muted ms-1">(min. 8 characters)</small>
+          </label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-lock-fill input-icon"></i>
+            <input type="password" id="password" name="password" class="form-control glass-input"
+                   placeholder="Create strong password" required minlength="8"
+                   autocomplete="new-password"/>
+            <button type="button" class="btn-eye" onclick="togglePassword('password')">
+              <i class="bi bi-eye" id="password-eye"></i>
+            </button>
+          </div>
+          <div class="password-strength mt-1" id="strengthBar">
+            <div class="strength-fill" id="strengthFill"></div>
+          </div>
+          <small class="strength-label" id="strengthLabel"></small>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password" class="form-label">Confirm Password</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-lock-check-fill input-icon"></i>
+            <input type="password" id="confirm_password" name="confirm_password"
+                   class="form-control glass-input" placeholder="Repeat password"
+                   required autocomplete="new-password"/>
+            <button type="button" class="btn-eye" onclick="togglePassword('confirm_password')">
+              <i class="bi bi-eye" id="confirm_password-eye"></i>
+            </button>
+          </div>
+          <small class="text-danger d-none" id="pwMatchErr">Passwords do not match</small>
+        </div>
+
+        <button type="submit" class="btn-primary-glow w-100 mt-3" id="registerBtn">
+          <span class="btn-text"><i class="bi bi-person-plus-fill me-2"></i>Create Account</span>
+          <span class="btn-loader d-none"><i class="bi bi-arrow-repeat spin me-2"></i>Creating…</span>
+        </button>
+      </form>
+
+      <div class="auth-footer mt-3">
+        <p>Already have an account?
+          <a href="{{ url_for('login') }}" class="auth-link">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePassword(id) {
+  const inp = document.getElementById(id);
+  const eye = document.getElementById(id + '-eye');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  eye.className = inp.type === 'text' ? 'bi bi-eye-slash' : 'bi bi-eye';
+}
+
+const pwInput = document.getElementById('password');
+const pwFill  = document.getElementById('strengthFill');
+const pwLabel = document.getElementById('strengthLabel');
+pwInput.addEventListener('input', function () {
+  const v = this.value;
+  let score = 0;
+  if (v.length >= 8) score++;
+  if (/[A-Z]/.test(v)) score++;
+  if (/[0-9]/.test(v)) score++;
+  if (/[^A-Za-z0-9]/.test(v)) score++;
+  const map = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  const cls = ['', 'bg-danger', 'bg-warning', 'bg-info', 'bg-success'];
+  pwFill.style.width = (score * 25) + '%';
+  pwFill.className   = 'strength-fill ' + (cls[score] || '');
+  pwLabel.textContent = map[score] || '';
+});
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+  const pw  = document.getElementById('password').value;
+  const cpw = document.getElementById('confirm_password').value;
+  const err = document.getElementById('pwMatchErr');
+  if (pw !== cpw) {
+    e.preventDefault();
+    err.classList.remove('d-none');
+    return;
+  }
+  err.classList.add('d-none');
+  const btn = document.getElementById('registerBtn');
+  btn.querySelector('.btn-text').classList.add('d-none');
+  btn.querySelector('.btn-loader').classList.remove('d-none');
+});
+</script>
+{% endblock %}

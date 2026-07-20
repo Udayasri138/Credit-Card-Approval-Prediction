@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Prediction History{% endblock %}
+{% block page_title %}My Prediction History{% endblock %}
+
+{% block content %}
+<div class="history-page fade-in">
+  <div class="page-header-row">
+    <div>
+      <h3><i class="bi bi-clock-history me-2"></i>Prediction History</h3>
+      <p class="text-muted">All your credit card application predictions</p>
+    </div>
+    <a href="{{ url_for('apply') }}" class="btn-primary-glow">
+      <i class="bi bi-plus-circle me-2"></i>New Application
+    </a>
+  </div>
+
+  {% if rows %}
+  <div class="table-card glass">
+    <div class="table-responsive">
+      <table class="table table-glass">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Applicant</th>
+            <th>Result</th>
+            <th>Risk Level</th>
+            <th>Confidence</th>
+            <th>Model</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr class="fade-in-row">
+            <td class="text-muted">#{{ r.PredictionID }}</td>
+            <td><strong>{{ r.FullName }}</strong></td>
+            <td>
+              <span class="badge-result {{ 'badge-approved' if r.ApprovalResult == 'Approved' else 'badge-rejected' }}">
+                <i class="bi bi-{{ 'check-circle-fill' if r.ApprovalResult == 'Approved' else 'x-circle-fill' }} me-1"></i>
+                {{ r.ApprovalResult }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-risk risk-{{ r.RiskCategory.lower().replace(' ','-') }}">
+                {{ r.RiskCategory }}
+              </span>
+            </td>
+            <td>
+              <div class="conf-bar-wrap">
+                <div class="conf-bar {{ 'conf-approved' if r.ApprovalResult == 'Approved' else 'conf-rejected' }}"
+                     style="width:{{ r.ConfidenceScore }}%"></div>
+                <span>{{ r.ConfidenceScore }}%</span>
+              </div>
+            </td>
+            <td>
+              <span class="model-badge">
+                <i class="bi bi-cpu me-1"></i>{{ r.ModelName }}
+              </span>
+            </td>
+            <td class="text-muted">
+              {{ r.PredictionDate.strftime('%d %b %Y') if r.PredictionDate else '—' }}
+            </td>
+            <td>
+              <a href="{{ url_for('result', pred_id=r.PredictionID) }}"
+                 class="btn-icon-sm" title="View Result">
+                <i class="bi bi-eye-fill"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination-wrap">
+      <nav>
+        <ul class="pagination pagination-glass">
+          <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('history', page=page-1) }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          {% for p in range(1, total_pages+1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('history', page=p) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+          <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('history', page=page+1) }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="empty-state glass">
+    <i class="bi bi-inbox" style="font-size:3rem; opacity:0.4;"></i>
+    <h5 class="mt-3">No predictions yet</h5>
+    <p class="text-muted">Submit a credit card application to see predictions here.</p>
+    <a href="{{ url_for('apply') }}" class="btn-primary-glow mt-2">
+      <i class="bi bi-plus-circle me-2"></i>Submit Application
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

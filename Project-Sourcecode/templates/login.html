@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <!-- Left panel -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="auth-brand">
+        <i class="bi bi-credit-card-2-front-fill"></i>
+        <span>CreditAI</span>
+      </div>
+      <h2 class="auth-headline">Intelligent Credit<br>Decision Making</h2>
+      <p class="auth-desc">
+        AI-powered credit card approval prediction system.
+        Fast, accurate, and secure banking decisions.
+      </p>
+      <div class="auth-features">
+        <div class="auth-feature">
+          <i class="bi bi-lightning-charge-fill"></i>
+          <span>Instant Predictions</span>
+        </div>
+        <div class="auth-feature">
+          <i class="bi bi-shield-lock-fill"></i>
+          <span>Bank-Grade Security</span>
+        </div>
+        <div class="auth-feature">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>97%+ Accuracy</span>
+        </div>
+      </div>
+    </div>
+    <div class="auth-decoration">
+      <div class="deco-card deco-card-1">
+        <i class="bi bi-cpu-fill"></i>
+        <span>XGBoost Model</span>
+      </div>
+      <div class="deco-card deco-card-2">
+        <i class="bi bi-check-circle-fill text-success"></i>
+        <span>Approved</span>
+      </div>
+      <div class="deco-card deco-card-3">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>94% Confidence</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="auth-right">
+    <div class="auth-card glass">
+      <div class="auth-card-header">
+        <h1>Welcome Back</h1>
+        <p>Sign in to your CreditAI account</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('login') }}" class="auth-form" novalidate id="loginForm">
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-envelope-fill input-icon"></i>
+            <input type="email" id="email" name="email" class="form-control glass-input"
+                   placeholder="you@example.com" required autocomplete="email"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-icon-wrap">
+            <i class="bi bi-lock-fill input-icon"></i>
+            <input type="password" id="password" name="password" class="form-control glass-input"
+                   placeholder="Your password" required autocomplete="current-password"/>
+            <button type="button" class="btn-eye" onclick="togglePassword('password')">
+              <i class="bi bi-eye" id="password-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary-glow w-100 mt-3" id="loginBtn">
+          <span class="btn-text"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</span>
+          <span class="btn-loader d-none"><i class="bi bi-arrow-repeat spin me-2"></i>Signing in…</span>
+        </button>
+      </form>
+
+      <div class="auth-divider"><span>OR</span></div>
+
+      <div class="auth-footer">
+        <p>Don't have an account?
+          <a href="{{ url_for('register') }}" class="auth-link">Create account</a>
+        </p>
+        <div class="demo-credentials glass mt-3">
+          <small><strong><i class="bi bi-info-circle me-1"></i>Demo Credentials</strong></small><br>
+          <small>Admin: <code>admin@creditcard.com</code> / <code>Admin@1234</code></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePassword(id) {
+  const inp = document.getElementById(id);
+  const eye = document.getElementById(id + '-eye');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    eye.className = 'bi bi-eye-slash';
+  } else {
+    inp.type = 'password';
+    eye.className = 'bi bi-eye';
+  }
+}
+document.getElementById('loginForm').addEventListener('submit', function() {
+  const btn = document.getElementById('loginBtn');
+  btn.querySelector('.btn-text').classList.add('d-none');
+  btn.querySelector('.btn-loader').classList.remove('d-none');
+});
+</script>
+{% endblock %}
